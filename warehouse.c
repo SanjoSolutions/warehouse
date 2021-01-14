@@ -132,7 +132,19 @@ int main(int argc, char* argv[]) {
 
 		writeGoods(firstListItem);
 	} else if (strcmp(operation, "out") == 0) {
-	
+	  struct ListItem* firstListItem = readGoods();
+    struct ListItem* listItem = findGoodsPositionListItemByName(firstListItem, goodsName);
+    if (listItem) {
+      struct GoodsPosition* goodsPosition = listItem->value;
+      if (goodsPosition->amount >= amount) {
+        goodsPosition->amount -= amount;
+        writeGoods(firstListItem);
+      } else {
+        printf("Amount of good not available. Only %d available.\n", goodsPosition->amount);
+      }
+    } else {
+      puts("Good not available.");
+    }
 	}
 	return 0;
 }
