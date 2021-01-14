@@ -9,10 +9,43 @@ struct GoodsPosition {
 	int amount;
 };
 
+struct GoodsPosition* createGoodsPosition(char* name, int amount) {
+  struct GoodsPosition* goodsPosition = malloc(sizeof(struct GoodsPosition));
+  goodsPosition->name = name;
+  goodsPosition->amount = amount;
+  return goodsPosition;
+}
+
 struct ListItem {
 	void* value;
 	void* nextListItem;
 };
+
+struct ListItem* createListItem(void* value, struct ListItem* nextListItem) {
+  struct ListItem* listItem = malloc(sizeof(struct ListItem));
+  listItem->value = value;
+  listItem->nextListItem = NULL;
+  return listItem;
+}
+
+void appendListItem(struct ListItem* firstListItem, struct ListItem* listItem) {
+  if (firstListItem) {
+    struct ListItem* lastListItem = firstListItem;
+    while (lastListItem->nextListItem) {
+      lastListItem = lastListItem->nextListItem;
+    }
+    lastListItem->nextListItem = listItem;
+  } else {
+    firstListItem = listItem;
+  }
+}
+
+struct ListItem* createAndAppendGoodsPositionListItem(struct ListItem* firstListItem, char* name, int amount) {
+  struct GoodsPosition* goodsPosition = createGoodsPosition(name, 0);
+  struct ListItem* listItem = createListItem(goodsPosition, NULL);
+  appendListItem(firstListItem, listItem);
+  return listItem;
+}
 
 struct ListItem* findGoodsPositionListItemByName(struct ListItem* firstListItem, char* name) {
   struct ListItem* listItem = firstListItem;
@@ -108,27 +141,11 @@ int main(int argc, char* argv[]) {
 	if (strcmp(operation, "in") == 0) {
 		struct ListItem* firstListItem = readGoods();
 		struct ListItem* listItem = findGoodsPositionListItemByName(firstListItem, goodsName);
-		if (listItem) {
-		  struct GoodsPosition* goodsPosition = listItem->value;
-		  goodsPosition->amount += amount;
-		} else {
-		  struct GoodsPosition* goodsPosition = malloc(sizeof(struct GoodsPosition));
-      goodsPosition->name = goodsName;
-      goodsPosition->amount = amount;
-
-      struct ListItem* listItem = malloc(sizeof(struct ListItem));
-      listItem->value = goodsPosition;
-      listItem->nextListItem = NULL;
-      if (firstListItem) {
-        struct ListItem* lastListItem = firstListItem;
-        while (lastListItem->nextListItem) {
-          lastListItem = lastListItem->nextListItem;
-        }
-        lastListItem->nextListItem = listItem;
-      } else {
-        firstListItem = listItem;
-      }
+		if (!listItem) {
+      listItem = createAndAppendGoodsPositionListItem(firstListItem, goodsName, 0);
 		}
+		struct GoodsPosition* goodsPosition = listItem->value;
+    goodsPosition->amount += amount;
 
 		writeGoods(firstListItem);
 	} else if (strcmp(operation, "out") == 0) {
@@ -145,6 +162,15 @@ int main(int argc, char* argv[]) {
     } else {
       puts("Good not available.");
     }
+	} else if (strcmp(operation, "set") == 0) {
+	  struct ListItem* firstListItem = readGoods();
+	  struct ListItem* listItem = findGoodsPositionListItemByName(firstListItem, goodsName);
+	  if (!listItem) {
+	    listItem = createAndAppendGoodsPositionListItem(firstListItem, goodsName, 0);
+	  }
+	  struct GoodsPosition* goodsPosition = listItem->value;
+    goodsPosition->amount = amount;
+    writeGoods(firstListItem);
 	}
 	return 0;
 }
