@@ -14,6 +14,17 @@ struct ListItem {
 	void* nextListItem;
 };
 
+struct ListItem* findGoodsPositionListItemByName(struct ListItem* firstListItem, char* name) {
+  struct ListItem* listItem = firstListItem;
+  do {
+    if (strcmp(((struct GoodsPosition*)listItem->value)->name, name) == 0) {
+      return listItem;
+    }
+    listItem = listItem->nextListItem;
+  } while (listItem);
+  return NULL;
+}
+
 struct ListItem* readGoods() {
 	FILE* file = fopen(GOODS_FILE_PATH, "r");
 	struct ListItem* goods = NULL;
@@ -37,6 +48,7 @@ struct ListItem* readGoods() {
 			}
 			fieldIndex++;
 			stringIndex = 0;
+
 			if (character == '\n') {
 				struct GoodsPosition* goodsPosition = malloc(sizeof(struct GoodsPosition));
 				goodsPosition->name = name;
@@ -51,6 +63,7 @@ struct ListItem* readGoods() {
 					goods = listItem;
 				}
 				lastListItem = listItem;
+				fieldIndex = 0;
 				name = NULL;
 				amount = 0;
 			}
@@ -94,20 +107,27 @@ int main(int argc, char* argv[]) {
 	int amount = atoi(argv[3]);
 	if (strcmp(operation, "in") == 0) {
 		struct ListItem* firstListItem = readGoods();
-		struct GoodsPosition* goodsPosition = malloc(sizeof(struct GoodsPosition));
-		goodsPosition->name = goodsName;
-		goodsPosition->amount = amount;
-		struct ListItem* listItem = malloc(sizeof(struct ListItem));
-		listItem->value = goodsPosition;
-		listItem->nextListItem = NULL;
-		if (firstListItem) {
-			struct ListItem* lastListItem = firstListItem;
-			while (lastListItem->nextListItem) {
-				lastListItem = lastListItem->nextListItem;
-			}
-			lastListItem->nextListItem = listItem;
+		struct ListItem* listItem = findGoodsPositionListItemByName(firstListItem, goodsName);
+		if (listItem) {
+		  struct GoodsPosition* goodsPosition = listItem->value;
+		  goodsPosition->amount += amount;
 		} else {
-			firstListItem = listItem;
+		  struct GoodsPosition* goodsPosition = malloc(sizeof(struct GoodsPosition));
+      goodsPosition->name = goodsName;
+      goodsPosition->amount = amount;
+
+      struct ListItem* listItem = malloc(sizeof(struct ListItem));
+      listItem->value = goodsPosition;
+      listItem->nextListItem = NULL;
+      if (firstListItem) {
+        struct ListItem* lastListItem = firstListItem;
+        while (lastListItem->nextListItem) {
+          lastListItem = lastListItem->nextListItem;
+        }
+        lastListItem->nextListItem = listItem;
+      } else {
+        firstListItem = listItem;
+      }
 		}
 
 		writeGoods(firstListItem);
