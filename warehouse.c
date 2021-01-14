@@ -1,6 +1,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 
 #define GOODS_FILE_PATH "warehouse.csv"
 
@@ -134,43 +135,61 @@ void writeGoods(struct ListItem* firstListItem) {
   fclose(file);
 }
 
+void in(char* goodsName, int amount) {
+  struct ListItem* firstListItem = readGoods();
+  struct ListItem* listItem = findGoodsPositionListItemByName(firstListItem, goodsName);
+  if (!listItem) {
+    listItem = createAndAppendGoodsPositionListItem(firstListItem, goodsName, 0);
+  }
+  struct GoodsPosition* goodsPosition = listItem->value;
+  goodsPosition->amount += amount;
+
+  writeGoods(firstListItem);
+}
+
+void out(char* goodsName, int amount) {
+  struct ListItem* firstListItem = readGoods();
+  struct ListItem* listItem = findGoodsPositionListItemByName(firstListItem, goodsName);
+  if (listItem) {
+    struct GoodsPosition* goodsPosition = listItem->value;
+    if (goodsPosition->amount >= amount) {
+      goodsPosition->amount -= amount;
+      writeGoods(firstListItem);
+    } else {
+      printf("Amount of good not available. Only %d available.\n", goodsPosition->amount);
+    }
+  } else {
+    puts("Good not available.");
+  }
+}
+
+void set(char* goodsName, int amount) {
+  struct ListItem* firstListItem = readGoods();
+  struct ListItem* listItem = findGoodsPositionListItemByName(firstListItem, goodsName);
+  if (!listItem) {
+    listItem = createAndAppendGoodsPositionListItem(firstListItem, goodsName, 0);
+  }
+  struct GoodsPosition* goodsPosition = listItem->value;
+  goodsPosition->amount = amount;
+  writeGoods(firstListItem);
+}
+
+bool isOperation(char* operation, char* checkedOperation) {
+  return strcmp(operation, checkedOperation) == 0;
+}
+
 int main(int argc, char* argv[]) {
   char* operation = argv[1];
   char* goodsName = argv[2];
   int amount = atoi(argv[3]);
-  if (strcmp(operation, "in") == 0) {
-    struct ListItem* firstListItem = readGoods();
-    struct ListItem* listItem = findGoodsPositionListItemByName(firstListItem, goodsName);
-    if (!listItem) {
-      listItem = createAndAppendGoodsPositionListItem(firstListItem, goodsName, 0);
-    }
-    struct GoodsPosition* goodsPosition = listItem->value;
-    goodsPosition->amount += amount;
 
-    writeGoods(firstListItem);
-  } else if (strcmp(operation, "out") == 0) {
-    struct ListItem* firstListItem = readGoods();
-    struct ListItem* listItem = findGoodsPositionListItemByName(firstListItem, goodsName);
-    if (listItem) {
-      struct GoodsPosition* goodsPosition = listItem->value;
-      if (goodsPosition->amount >= amount) {
-        goodsPosition->amount -= amount;
-        writeGoods(firstListItem);
-      } else {
-        printf("Amount of good not available. Only %d available.\n", goodsPosition->amount);
-      }
-    } else {
-      puts("Good not available.");
-    }
-  } else if (strcmp(operation, "set") == 0) {
-    struct ListItem* firstListItem = readGoods();
-    struct ListItem* listItem = findGoodsPositionListItemByName(firstListItem, goodsName);
-    if (!listItem) {
-      listItem = createAndAppendGoodsPositionListItem(firstListItem, goodsName, 0);
-    }
-    struct GoodsPosition* goodsPosition = listItem->value;
-    goodsPosition->amount = amount;
-    writeGoods(firstListItem);
+  if (isOperation(operation, "in")) {
+    in(goodsName, amount);
+  } else if (isOperation(operation, "out")) {
+    out(goodsName, amount);
+  } else if (isOperation(operation, "set")) {
+    set(goodsName, amount);
   }
+
   return 0;
 }
